@@ -1,58 +1,66 @@
-import React from 'react';
-import logo from './logo.svg';
-import { Counter } from './features/counter/Counter';
-import './App.css';
+import { Drawer, LinearProgress, Grid, Badge } from '@material-ui/core';
+import { AddShoppingCart } from '@material-ui/icons';
+import { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { Wrapper, StyledButton } from './App.styles';
+import { useAppDispatch, useAppSelector } from './app/hooks';
+import Cart from './components/Cart/Cart';
+import Item from './components/Item/Item';
+import {
+  addToCart,
+  getTotalItems,
+  removeFromCart,
+} from './features/cart/cartSlice';
+import {
+  getAllProducts,
+  selectAllProducts,
+  selectError,
+  selectIsLoading,
+  selectProducts,
+} from './features/product/productsSlice';
+import { CartItemType } from './services/productService';
 
-function App() {
+const App = () => {
+  const dispatch = useAppDispatch();
+  const isLoading = useAppSelector(selectIsLoading);
+  const error = useAppSelector(selectError);
+  const products = useSelector(selectAllProducts);
+  const totalItems = useSelector(getTotalItems);
+
+  const [cartOpen, setCartOpen] = useState(false);
+  useEffect(() => {
+    dispatch(getAllProducts());
+  }, []);
+
+  const handleAddToCart = (clickedItem: CartItemType) => {
+    dispatch(addToCart(clickedItem));
+  };
+
+  const handleRemoveFromCart = (id: number) => {
+    dispatch(removeFromCart(id));
+  };
+
+  if (isLoading) return <LinearProgress />;
+  if (error) return <div>Something went wrong...</div>;
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <Counter />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <span>
-          <span>Learn </span>
-          <a
-            className="App-link"
-            href="https://reactjs.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            React
-          </a>
-          <span>, </span>
-          <a
-            className="App-link"
-            href="https://redux.js.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Redux
-          </a>
-          <span>, </span>
-          <a
-            className="App-link"
-            href="https://redux-toolkit.js.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Redux Toolkit
-          </a>
-          ,<span> and </span>
-          <a
-            className="App-link"
-            href="https://react-redux.js.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            React Redux
-          </a>
-        </span>
-      </header>
-    </div>
+    <Wrapper>
+      <Drawer anchor='right' open={cartOpen} onClose={() => setCartOpen(false)}>
+        <Cart />
+      </Drawer>
+      <StyledButton onClick={() => setCartOpen(true)}>
+        <Badge badgeContent={totalItems} color='error'>
+          <AddShoppingCart />
+        </Badge>
+      </StyledButton>
+      <Grid container spacing={3}>
+        {products?.map((item) => (
+          <Grid item key={item.id} xs={12} sm={4}>
+            <Item item={item} handleAddToCart={handleAddToCart} />
+          </Grid>
+        ))}
+      </Grid>
+    </Wrapper>
   );
-}
+};
 
 export default App;
